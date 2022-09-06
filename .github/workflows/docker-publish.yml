@@ -7,9 +7,10 @@ name: Docker
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", 'v*.*.*' ]
+    tags: [ 'v*.*.*' ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", 'v*.*.*' ]
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -24,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ["v1.24.3","v1.24.4","v1.25.0"]
+        version: ["master"]
 
     steps:
       - name: Checkout repository
@@ -43,26 +44,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout kind
-        uses: actions/checkout@v2
-        with:
-          repository: kubernetes-sigs/kind
-          path: kind
-          ref: main
+      - name: Set variables
+        run: |
+          KIND_VERSION=$(cat KIND_VERSION)
+          BASE_IMAGE=$(cat BASE_IMAGE)
+          echo "KIND_VERSION=$KIND_VERSION" >> $GITHUB_ENV
+          echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
 
       - name: Install kind
         run: |
-          cd kind
-          # git fetch origin pull/2465/head:bump_base
-          # git checkout bump_base
-          make all
-          bin/kind version
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/${{ env.KIND_VERSION }}/kind-linux-amd64
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
 
       - name: Build kind image
         run: |
           mkdir -p tmp/kubernetes
           git clone --single-branch --branch ${{ matrix.version }} https://github.com/kubernetes/kubernetes tmp/kubernetes
-          ./kind/bin/kind build node-image $PWD/tmp/kubernetes --arch ppc64le --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.version }}
+          kind build node-image $PWD/tmp/kubernetes --arch ppc64le --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.version }} --base-image ${{ env.BASE_IMAGE }} 
 
       - name: Publish image
         if: github.event_name != 'pull_request'
