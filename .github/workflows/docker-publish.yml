@@ -6,6 +6,9 @@ name: Docker
 # documentation.
 
 on:
+  schedule:
+    # Build the job every day for the master branch
+    - cron: '0 0 * * *'
   push:
     branches: [ "main", 'v*.*.*' ]
     tags: [ 'v*.*.*' ]
