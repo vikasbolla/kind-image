@@ -16,13 +16,6 @@ on:
   pull_request:
     branches: [ "main", 'v*.*.*' ]
 
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: quay.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: powercloud/kind-node
-
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,6 +25,12 @@ jobs:
       fail-fast: false
       matrix:
         version: ["master"]
+    env:
+      # Use docker.io for Docker Hub if empty
+      REGISTRY: quay.io
+      # github.repository as <account>/<repo>
+      IMAGE_NAME: powercloud/kind-node
+
 
     steps:
       - name: Checkout repository
@@ -56,20 +55,27 @@ jobs:
           BASE_IMAGE=$(cat BASE_IMAGE)
           echo "KIND_VERSION=$KIND_VERSION" >> $GITHUB_ENV
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
+          export PATH=$PATH:$(go env GOPATH)/bin
+          echo "PATH=$PATH" >> $GITHUB_ENV
 
-      - name: Install kind
+      - name: Build and install kind - ${{ env.KIND_VERSION }}
         run: |
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/${{ env.KIND_VERSION }}/kind-linux-amd64
-          chmod +x ./kind
-          sudo mv ./kind /usr/local/bin/kind
+          # The runner has kind pre-installed, removing the same to install the preferred version.
+          rm -rf $(which kind)
+          git clone --depth 1 --branch ${{ env.KIND_VERSION }} https://github.com/kubernetes-sigs/kind.git
+          pushd kind
+          git apply ../build-ppc64le.patch 
+          popd
 
-      - name: Build kind image
+          make -C kind install
+
+      - name: Build kind-node image - ${{ matrix.version }}
         run: |
           mkdir -p tmp/kubernetes
-          git clone --single-branch --branch ${{ matrix.version }} https://github.com/kubernetes/kubernetes tmp/kubernetes
-          kind build node-image $PWD/tmp/kubernetes --arch ppc64le --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.version }} --base-image ${{ env.BASE_IMAGE }} 
+          git clone --single-branch --filter=tree:0 --branch ${{ matrix.version }} https://github.com/kubernetes/kubernetes tmp/kubernetes
+          kind build node-image $PWD/tmp/kubernetes --arch ppc64le --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.version }} --base-image ${{ env.BASE_IMAGE }}
 
-      - name: Publish image
+      - name: Publish node image
         if: github.event_name != 'pull_request'
         run: |
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.version }}
