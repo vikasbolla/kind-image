@@ -1,0 +1,101 @@
+diff --git a/hack/build/init-buildx.sh b/hack/build/init-buildx.sh
+index fddb7c7..962e00c 100755
+--- a/hack/build/init-buildx.sh
++++ b/hack/build/init-buildx.sh
+@@ -23,7 +23,8 @@ current_builder="$(docker buildx inspect)"
+ # linux/amd64, linux/arm64, linux/riscv64, linux/ppc64le, linux/s390x, linux/386, linux/arm/v7, linux/arm/v6
+ if ! grep -q "^Driver: docker$" <<<"${current_builder}" && \
+      grep -q "linux/amd64" <<<"${current_builder}" && \
+-     grep -q "linux/arm64" <<<"${current_builder}"; then
++     grep -q "linux/arm64" <<<"${current_builder}" && \
++     grep -q "linux/ppc64le" <<<"${current_builder}"; then
+   exit 0
+ fi
+ 
+diff --git a/images/Makefile.common.in b/images/Makefile.common.in
+index 821d9c5..20b6c02 100644
+--- a/images/Makefile.common.in
++++ b/images/Makefile.common.in
+@@ -17,11 +17,11 @@
+ # get image name from directory we're building
+ IMAGE_NAME?=$(notdir $(CURDIR))
+ # docker image registry, default to upstream
+-REGISTRY?=gcr.io/k8s-staging-kind
++REGISTRY?=quay.io/powercloud
+ # for appending build-meta like "_containerd-v1.7.1"
+ TAG_SUFFIX?=
+ # tag based on date-sha
+-TAG?=$(shell echo "$$(date +v%Y%m%d)-$$(git describe --always --dirty)")
++TAG?=$(shell echo "$$(date +v%Y%m%d)-$$(git describe --always)")
+ # the full image tag
+ IMAGE?=$(REGISTRY)/$(IMAGE_NAME):$(TAG)$(TAG_SUFFIX)
+ # Go version to use, respected by images that build go binaries
+@@ -31,7 +31,7 @@ GO_VERSION=$(shell cat $(CURDIR)/../../.go-version | head -n1)
+ export DOCKER_CLI_EXPERIMENTAL=enabled
+ 
+ # build with buildx
+-PLATFORMS?=linux/amd64,linux/arm64
++PLATFORMS?=linux/ppc64le
+ OUTPUT?=
+ PROGRESS=auto
+ EXTRA_BUILD_OPT?=
+diff --git a/images/base/Dockerfile b/images/base/Dockerfile
+index 6a04799..31d9455 100644
+--- a/images/base/Dockerfile
++++ b/images/base/Dockerfile
+@@ -108,10 +108,10 @@ COPY --chmod=0755 scripts/third_party/gimme/gimme /usr/local/bin/
+ COPY --chmod=0755 scripts/target-cc /usr/local/bin/
+ # tools needed at build-time only
+ # first ensure we can install packages for both architectures
+-RUN dpkg --add-architecture arm64 && dpkg --add-architecture amd64 \
+-    && clean-install bash ca-certificates curl git make pkg-config \
+-    crossbuild-essential-amd64 crossbuild-essential-arm64 \
+-    libseccomp-dev:amd64 libseccomp-dev:arm64
++RUN dpkg --add-architecture ppc64el \
++    && clean-install bash ca-certificates curl git make pkg-config gcc \
++    crossbuild-essential-amd64 crossbuild-essential-ppc64el \
++    libseccomp-dev:amd64 libseccomp-dev:ppc64el
+ # set by makefile to .go-version
+ ARG GO_VERSION
+ RUN eval "$(gimme "${GO_VERSION}")" \
+diff --git a/images/base/scripts/target-cc b/images/base/scripts/target-cc
+index f8226e1..dc9980f 100755
+--- a/images/base/scripts/target-cc
++++ b/images/base/scripts/target-cc
+@@ -23,6 +23,8 @@ case $TARGETARCH in
+     echo -n 'aarch64-linux-gnu-gcc' ;;
+   amd64)
+     echo -n 'x86_64-linux-gnu-gcc' ;;
++  ppc64le)
++    echo -n 'powerpc64le-linux-gnu-gcc' ;;
+   *)
+     exit 1 ;;
+ esac
+diff --git a/pkg/build/nodeimage/const_cni.go b/pkg/build/nodeimage/const_cni.go
+index 6715884..bde6799 100644
+--- a/pkg/build/nodeimage/const_cni.go
++++ b/pkg/build/nodeimage/const_cni.go
+@@ -20,7 +20,7 @@ package nodeimage
+ The default CNI manifest and images are our own tiny kindnet
+ */
+ 
+-const kindnetdImage = "docker.io/kindest/kindnetd:v20240513-cd2ac642"
++const kindnetdImage = "quay.io/kviswana/kindnetd:v20240611-d897688d"
+ 
+ var defaultCNIImages = []string{kindnetdImage}
+ 
+diff --git a/pkg/build/nodeimage/const_storage.go b/pkg/build/nodeimage/const_storage.go
+index 7ddb8a6..f1ec3a9 100644
+--- a/pkg/build/nodeimage/const_storage.go
++++ b/pkg/build/nodeimage/const_storage.go
+@@ -25,8 +25,8 @@ NOTE: we have customized it in the following ways:
+ - install as the default storage class
+ */
+ 
+-const storageProvisionerImage = "docker.io/kindest/local-path-provisioner:v20240513-b9bba138"
+-const storageHelperImage = "docker.io/kindest/local-path-helper:v20230510-486859a6"
++const storageProvisionerImage = "quay.io/kviswana/local-path-provisioner:v20240611-d897688d"
++const storageHelperImage = "quay.io/kviswana/local-path-helper:v20240611-d897688d"
+ 
+ // image we need to preload
+ var defaultStorageImages = []string{storageProvisionerImage, storageHelperImage}
