@@ -1,0 +1,67 @@
+name: Build kind cluster component images
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      fail-fast: false
+    env:
+      # Use docker.io for Docker Hub if empty
+      IMAGE_REGISTRY: quay.io
+
+      # Override Makefile default variables
+      REGISTRY: quay.io/powercloud
+      PLATFORMS: linux/ppc64le
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.6
+
+      - name: Log into registry ${{ env.IMAGE_REGISTRY }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.IMAGE_REGISTRY }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Clone and patch kubernetes-sigs/kind repository
+        run: |
+          git clone --depth 1 --branch $(cat KIND_VERSION) https://github.com/kubernetes-sigs/kind.git
+          cd kind
+          git apply ../build-ppc64le.patch
+          echo "TAG=$(date +v%Y%m%d)-$(git describe --always)" >> $GITHUB_ENV
+
+      - name: Build local-path-provisioner
+        working-directory: ./kind
+        run: |
+          IMAGE_NAME=kind-local-path-provisioner make -C images/local-path-provisioner push
+
+      - name: Build local-path-helper
+        working-directory: ./kind
+        run: |
+          IMAGE_NAME=kind-local-path-helper make -C images/local-path-helper push
+
+      - name: Build base
+        working-directory: ./kind
+        run: |
+          IMAGE_NAME=kind-base make -C images/base push
+
+      - name: Build kindnetd
+        working-directory: ./kind
+        run: |
+          IMAGE_NAME=kind-kindnetd make -C images/kindnetd push
+
+      - name: Build haproxy
+        working-directory: ./kind
+        run: |
+          IMAGE_NAME=kind-haproxy make -C images/haproxy push
