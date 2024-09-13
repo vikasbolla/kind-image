@@ -1,8 +1,8 @@
 diff --git a/hack/build/init-buildx.sh b/hack/build/init-buildx.sh
-index fddb7c7..962e00c 100755
+index bb0d5bd..1550a82 100755
 --- a/hack/build/init-buildx.sh
 +++ b/hack/build/init-buildx.sh
-@@ -23,7 +23,8 @@ current_builder="$(docker buildx inspect)"
+@@ -21,7 +21,8 @@ current_builder="$(docker buildx inspect)"
  # linux/amd64, linux/arm64, linux/riscv64, linux/ppc64le, linux/s390x, linux/386, linux/arm/v7, linux/arm/v6
  if ! grep -q "^Driver: docker$" <<<"${current_builder}" && \
       grep -q "linux/amd64" <<<"${current_builder}" && \
@@ -13,7 +13,7 @@ index fddb7c7..962e00c 100755
  fi
  
 diff --git a/images/base/Dockerfile b/images/base/Dockerfile
-index 6a04799..31d9455 100644
+index 63060ae..215ba1d 100644
 --- a/images/base/Dockerfile
 +++ b/images/base/Dockerfile
 @@ -108,10 +108,10 @@ COPY --chmod=0755 scripts/third_party/gimme/gimme /usr/local/bin/
@@ -45,27 +45,27 @@ index f8226e1..dc9980f 100755
      exit 1 ;;
  esac
 diff --git a/pkg/build/nodeimage/const_cni.go b/pkg/build/nodeimage/const_cni.go
-index 6715884..f7a8e88 100644
+index 1d06e05..4568afb 100644
 --- a/pkg/build/nodeimage/const_cni.go
 +++ b/pkg/build/nodeimage/const_cni.go
 @@ -20,7 +20,7 @@ package nodeimage
  The default CNI manifest and images are our own tiny kindnet
  */
  
--const kindnetdImage = "docker.io/kindest/kindnetd:v20240513-cd2ac642"
+-const kindnetdImage = "docker.io/kindest/kindnetd:v20240813-c6f155d6"
 +const kindnetdImage = "quay.io/powercloud/kind-kindnetd:v20240626-0296c52"
  
  var defaultCNIImages = []string{kindnetdImage}
  
 diff --git a/pkg/build/nodeimage/const_storage.go b/pkg/build/nodeimage/const_storage.go
-index 7ddb8a6..03815e0 100644
+index d62c4ab..03815e0 100644
 --- a/pkg/build/nodeimage/const_storage.go
 +++ b/pkg/build/nodeimage/const_storage.go
 @@ -25,8 +25,8 @@ NOTE: we have customized it in the following ways:
  - install as the default storage class
  */
  
--const storageProvisionerImage = "docker.io/kindest/local-path-provisioner:v20240513-b9bba138"
+-const storageProvisionerImage = "docker.io/kindest/local-path-provisioner:v20240813-c6f155d6"
 -const storageHelperImage = "docker.io/kindest/local-path-helper:v20230510-486859a6"
 +const storageProvisionerImage = "quay.io/powercloud/kind-local-path-provisioner:v20240626-0296c52"
 +const storageHelperImage = "quay.io/powercloud/kind-local-path-helper:v20240626-0296c52"
