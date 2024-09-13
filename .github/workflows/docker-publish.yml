@@ -33,7 +33,7 @@ jobs:
       # Until variables are available across different github_events as a feature,
       # this operation can set a default value for k8s-version to 'master'
       # https://github.com/orgs/community/discussions/26322#discussioncomment-3251442
-      K8S-VERSION: ${{ inputs.k8s-version || 'master' }}
+      K8S-VERSION: ${{ inputs.k8s-version || 'v1.31.0' }}
 
 
     steps:
@@ -75,9 +75,7 @@ jobs:
 
       - name: Build kind-node image - ${{ env.K8S-VERSION}}
         run: |
-          mkdir -p tmp/kubernetes
-          git clone --single-branch --filter=tree:0 --branch ${{ env.K8S-VERSION }} https://github.com/kubernetes/kubernetes tmp/kubernetes
-          kind build node-image $PWD/tmp/kubernetes --arch ppc64le --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.K8S-VERSION }} --base-image ${{ env.BASE_IMAGE }}
+          kind build node-image --type url https://dl.k8s.io/${{ env.K8S-VERSION }}/kubernetes-server-linux-ppc64le.tar.gz --arch ppc64le --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.K8S-VERSION }} --base-image ${{ env.BASE_IMAGE }}
 
       - name: Publish node image - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.K8S-VERSION }}
         # Modifying or adding new changes to the workflow does not necessarily require the built image to be pushed.
