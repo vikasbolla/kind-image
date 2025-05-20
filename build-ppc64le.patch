@@ -67,7 +67,7 @@ index df601536..e2050319 100644
      && mv bin/local-path-provisioner-$TARGETARCH /usr/local/bin/local-path-provisioner \
      && GOBIN=/usr/local/bin go install github.com/google/go-licenses@latest \
 diff --git a/pkg/build/nodeimage/const_cni.go b/pkg/build/nodeimage/const_cni.go
-index a1c870c9..4568afbd 100644
+index a1c870c9..408cb333 100644
 --- a/pkg/build/nodeimage/const_cni.go
 +++ b/pkg/build/nodeimage/const_cni.go
 @@ -20,7 +20,7 @@ package nodeimage
@@ -75,12 +75,12 @@ index a1c870c9..4568afbd 100644
  */
  
 -const kindnetdImage = "docker.io/kindest/kindnetd:v20250214-acbabc1a"
-+const kindnetdImage = "quay.io/powercloud/kind-kindnetd:v20240626-0296c52"
++const kindnetdImage = "quay.io/powercloud/kind-kindnetd:v20250520-6cb9342"
  
  var defaultCNIImages = []string{kindnetdImage}
  
 diff --git a/pkg/build/nodeimage/const_storage.go b/pkg/build/nodeimage/const_storage.go
-index 0f4806bf..c887b3fe 100644
+index 0f4806bf..bc1ff3e0 100644
 --- a/pkg/build/nodeimage/const_storage.go
 +++ b/pkg/build/nodeimage/const_storage.go
 @@ -26,8 +26,8 @@ NOTE: we have customized it in the following ways:
@@ -89,13 +89,13 @@ index 0f4806bf..c887b3fe 100644
  
 -const storageProvisionerImage = "docker.io/kindest/local-path-provisioner:v20250214-acbabc1a"
 -const storageHelperImage = "docker.io/kindest/local-path-helper:v20241212-8ac705d0"
-+const storageProvisionerImage = "quay.io/powercloud/kind-local-path-provisioner:v20240626-0296c52"
-+const storageHelperImage = "quay.io/powercloud/kind-local-path-helper:v20240626-0296c52"
++const storageProvisionerImage = "quay.io/powercloud/kind-local-path-provisioner:v20250520-6cb9342"
++const storageHelperImage = "quay.io/powercloud/kind-local-path-helper:v20250520-6cb9342"
  
  // image we need to preload
  var defaultStorageImages = []string{storageProvisionerImage, storageHelperImage}
 diff --git a/pkg/cluster/internal/loadbalancer/const.go b/pkg/cluster/internal/loadbalancer/const.go
-index 3600b338..e84bf8c4 100644
+index 3600b338..0651b43c 100644
 --- a/pkg/cluster/internal/loadbalancer/const.go
 +++ b/pkg/cluster/internal/loadbalancer/const.go
 @@ -17,7 +17,7 @@ limitations under the License.
@@ -103,7 +103,7 @@ index 3600b338..e84bf8c4 100644
  
  // Image defines the loadbalancer image:tag
 -const Image = "docker.io/kindest/haproxy:v20230606-42a2262b"
-+const Image = "quay.io/powercloud/kind-haproxy:v20240626-0296c52"
++const Image = "quay.io/powercloud/kind-haproxy:v20250520-6cb9342"
  
  // ConfigPath defines the path to the config file in the image
  const ConfigPath = "/usr/local/etc/haproxy/haproxy.cfg"
