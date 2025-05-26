@@ -13,7 +13,7 @@ index b896f5a3..0459224c 100755
  fi
  
 diff --git a/images/base/Dockerfile b/images/base/Dockerfile
-index 1ce80d74..fac12de0 100644
+index 4a1e616f..526342a0 100644
 --- a/images/base/Dockerfile
 +++ b/images/base/Dockerfile
 @@ -108,10 +108,10 @@ COPY --chmod=0755 scripts/third_party/gimme/gimme /usr/local/bin/
@@ -45,7 +45,7 @@ index f8226e15..dc9980f1 100755
      exit 1 ;;
  esac
 diff --git a/images/local-path-provisioner/Dockerfile b/images/local-path-provisioner/Dockerfile
-index df601536..e2050319 100644
+index df601536..f42072b5 100644
 --- a/images/local-path-provisioner/Dockerfile
 +++ b/images/local-path-provisioner/Dockerfile
 @@ -15,7 +15,7 @@
@@ -62,19 +62,19 @@ index df601536..e2050319 100644
      && export GOTOOLCHAIN="go${GO_VERSION}" \
      && cd local-path-provisioner \
 -    && git fetch && git checkout "${VERSION}" \
-+#    && git fetch && git checkout "${VERSION}" \
++    # && git fetch && git checkout "${VERSION}" \
      && GOARCH=$TARGETARCH scripts/build \
      && mv bin/local-path-provisioner-$TARGETARCH /usr/local/bin/local-path-provisioner \
      && GOBIN=/usr/local/bin go install github.com/google/go-licenses@latest \
 diff --git a/pkg/build/nodeimage/const_cni.go b/pkg/build/nodeimage/const_cni.go
-index a1c870c9..408cb333 100644
+index e705e051..0292d614 100644
 --- a/pkg/build/nodeimage/const_cni.go
 +++ b/pkg/build/nodeimage/const_cni.go
 @@ -20,7 +20,7 @@ package nodeimage
  The default CNI manifest and images are our own tiny kindnet
  */
  
--const kindnetdImage = "docker.io/kindest/kindnetd:v20250214-acbabc1a"
+-const kindnetdImage = "docker.io/kindest/kindnetd:v20250512-df8de77b"
 +const kindnetdImage = "quay.io/powercloud/kind-kindnetd:v20250520-6cb9342"
  
  var defaultCNIImages = []string{kindnetdImage}
