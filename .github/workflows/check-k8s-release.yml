@@ -1,0 +1,77 @@
+name: Check for new Kubernetes releases
+
+on:
+  schedule:
+    - cron: '0 9 */3 * *'  # Every 3 days at 09:00 UTC
+  workflow_dispatch:     # Allow manual runs
+
+jobs:
+  check-k8s:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Fetch latest stable Kubernetes releases
+        id: fetch
+        run: |
+          # Fetch the latest 10 Kubernetes release tags from GitHub
+          curl -s "https://api.github.com/repos/kubernetes/kubernetes/releases?per_page=10" \
+            | jq -r '.[].tag_name' \     # Extract only the tag names
+            | grep -v -- '-alpha' | grep -v -- '-beta' | grep -v -- '-rc' \ # Filter out pre-releases
+            | sort -V > new_releases.txt  # Sort them version-wise and save
+
+          # Ensure the file with previously seen versions exists
+          [ -f .last_k8s_versions.txt ] || touch .last_k8s_versions.txt
+
+          # Sort the previously seen versions
+          sort -V .last_k8s_versions.txt > last_k8s_versions.sorted.txt
+
+          # Print out the current and previous release lists
+          echo "new_releases.txt:"
+          cat new_releases.txt
+          echo "last_k8s_versions.sorted.txt:"
+          cat last_k8s_versions.sorted.txt
+
+          # Compare new vs. previously seen versions
+          # Output only new versions that haven't been seen before
+          comm -23 new_releases.txt last_k8s_versions.sorted.txt > compared_versions.txt
+
+          # Output the new versions as a GitHub Action output
+          echo "compared_versions.txt<<EOF" >> $GITHUB_OUTPUT
+          cat compared_versions.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Check if new versions exist
+        id: has_new
+        run: |
+          if [[ -s compared_versions.txt ]]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Trigger build for each new version
+        if: steps.has_new.outputs.found == 'true'
+        run: |
+          while read -r version; do
+            echo "Triggering build for $version"
+            curl -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/${{ github.repository }}/actions/workflows/docker-publish.yml/dispatches \
+              -d "{\"ref\":\"main\", \"inputs\": {\"k8s-version\": \"$version\"}}"
+          done < compared_versions.txt
+
+      - name: Save last known versions
+        if: steps.has_new.outputs.found == 'true'
+        run: |
+          cp new_releases.txt .last_k8s_versions.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .last_k8s_versions.txt
+          git commit -m "Update last seen Kubernetes versions"
+          git push
