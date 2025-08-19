@@ -19,9 +19,10 @@ jobs:
         id: fetch
         run: |
           # Fetch the latest 10 Kubernetes release tags from GitHub
+          # Extract only the tag names, exclude alpha/beta/rc versions, sort them
           curl -s "https://api.github.com/repos/kubernetes/kubernetes/releases?per_page=10" \
-            | jq -r '.[].tag_name' \     # Extract only the tag names
-            | grep -v -- '-alpha' | grep -v -- '-beta' | grep -v -- '-rc' \ # Filter out pre-releases
+            | jq -r '.[].tag_name' \
+            | grep -v -- '-alpha' | grep -v -- '-beta' | grep -v -- '-rc' \
             | sort -V > new_releases.txt  # Sort them version-wise and save
 
           # Ensure the file with previously seen versions exists
