@@ -67,12 +67,33 @@ jobs:
               -d "{\"ref\":\"main\", \"inputs\": {\"k8s-version\": \"$version\"}}"
           done < compared_versions.txt
 
-      - name: Save last known versions
+      - name: Create or update pull request 
         if: steps.has_new.outputs.found == 'true'
-        run: |
-          cp new_releases.txt .last_k8s_versions.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .last_k8s_versions.txt
-          git commit -m "Update last seen Kubernetes versions"
-          git push
+        run: | 
+            # Generate a timestamped branch name
+            BRANCH="k8s-version-update-$(date +'%Y%m%d-%H%M%S')"
+
+            # Configure Git
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            # Create and switch to the new branch
+            git checkout -b "$BRANCH"
+
+            # Copy new versions file
+            cp new_releases.txt .last_k8s_versions.txt
+
+            # Stage, commit, and push
+            git add .last_k8s_versions.txt
+            git commit -m "Update Kubernetes versions on $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            git push origin "$BRANCH"
+
+            # Create pull request using GitHub CLI
+            gh pr create \
+                --title "Kubernetes version update: $(date +'%Y-%m-%d %H:%M:%S')" \
+                --body "Automated PR to update tracked Kubernetes versions." \
+                --base main \
+                --head "$BRANCH"
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
