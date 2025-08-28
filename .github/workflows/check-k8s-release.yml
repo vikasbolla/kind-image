@@ -2,7 +2,7 @@ name: Check for new Kubernetes releases
 
 on:
   schedule:
-    - cron: '0 9 */3 * *'  # Every 3 days at 09:00 UTC
+    - cron: '0 9 * * *'  # Every 3 days at 09:00 UTC
   workflow_dispatch:     # Allow manual runs
 
 jobs:
