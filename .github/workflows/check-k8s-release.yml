@@ -59,6 +59,7 @@ jobs:
 
           echo "=== DEBUG: show comm -3 output (differences, both columns) ==="
           echo "Columns: (left = only in new_releases) (right = only in last_k8s_versions.sorted)"
+          diff -u new_releases new_releases.sorted || echo "Already sorted OK"
           comm -3 new_releases last_k8s_versions.sorted | sed -n '1,200p' || true
           echo
           echo "=== DEBUG: show first/last 10 lines ==="
@@ -81,6 +82,7 @@ jobs:
 
           # Compare new vs previously seen versions
           # The command outputs only the versions that are new (in new_releases but not in your recorded old list).
+          diff -u new_releases new_releases.sorted || echo "Already sorted OK"
           comm -23 new_releases last_k8s_versions.sorted > compared_versions
 
           # Output the new versions as a GitHub Action output
