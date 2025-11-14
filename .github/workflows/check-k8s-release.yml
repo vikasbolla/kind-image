@@ -25,10 +25,9 @@ jobs:
             | grep -v -- '-alpha' | grep -v -- '-beta' | grep -v -- '-rc' \
             | sort -V > new_releases  # Sort them version-wise and save
 
+          sort -V new_releases > new_releases.sorted
           # Ensure the file with previously seen versions exists
           [ -f .last_k8s_versions ] || touch .last_k8s_versions
-
-          sort -V .new_releases > new_releases.sorted
           # Sort the previously seen versions
           sort -V .last_k8s_versions > last_k8s_versions.sorted
 
