@@ -28,64 +28,19 @@ jobs:
           # Ensure the file with previously seen versions exists
           [ -f .last_k8s_versions ] || touch .last_k8s_versions
 
+          sort -V .new_releases > new_releases.sorted
           # Sort the previously seen versions
           sort -V .last_k8s_versions > last_k8s_versions.sorted
 
-          echo "=== DEBUG: file info ==="
-          ls -l new_releases last_k8s_versions.sorted || true
-          echo
-
-          echo "=== DEBUG: show bytes at EOF (useful for missing newline) ==="
-          echo -n "new_releases last byte: "; tail -c1 new_releases | od -An -t x1 || true
-          echo -n "last_k8s_versions.sorted last byte: "; tail -c1 last_k8s_versions.sorted | od -An -t x1 || true
-          echo
-
-          echo "=== DEBUG: show files with visible line endings (cat -A) ==="
-          echo "---- new_releases ----"
-          cat -A new_releases | sed -n '1,200p'
-          echo "---- last_k8s_versions.sorted ----"
-          cat -A last_k8s_versions.sorted | sed -n '1,200p'
-          echo
-
-          echo "=== DEBUG: count lines, blank lines, and CRLF occurrences ==="
-          echo "new_releases: total lines: $(wc -l < new_releases)"
-          echo "new_releases: blank lines: $(grep -c '^$' new_releases || true)"
-          echo "new_releases: CRLF lines: $(grep -c $'\r$' new_releases || true)"
-          echo
-          echo "last_k8s_versions.sorted: total lines: $(wc -l < last_k8s_versions.sorted)"
-          echo "last_k8s_versions.sorted: blank lines: $(grep -c '^$' last_k8s_versions.sorted || true)"
-          echo "last_k8s_versions.sorted: CRLF lines: $(grep -c $'\r$' last_k8s_versions.sorted || true)"
-          echo
-
-          echo "=== DEBUG: show comm -3 output (differences, both columns) ==="
-          echo "Columns: (left = only in new_releases) (right = only in last_k8s_versions.sorted)"
-          sort -V new_releases -o new_releases.sorted
-          diff -u new_releases new_releases.sorted || echo "Already sorted OK"
-          comm -3 new_releases last_k8s_versions.sorted | sed -n '1,200p' || true
-          echo
-          echo "=== DEBUG: show first/last 10 lines ==="
-          echo "---- new_releases head/tail ----"
-          head -n 10 new_releases || true
-          echo "----"
-          tail -n 10 new_releases || true
-          echo
-          echo "---- last_k8s_versions.sorted head/tail ----"
-          head -n 10 last_k8s_versions.sorted || true
-          echo "----"
-          tail -n 10 last_k8s_versions.sorted || true
-          echo
-
           # Print out the current and previous release lists
-          echo "new_releases:"
-          cat new_releases
+          echo "new_releases.sorted:"
+          cat new_releases.sorted
           echo "last_k8s_versions.sorted:"
           cat last_k8s_versions.sorted
 
           # Compare new vs previously seen versions
           # The command outputs only the versions that are new (in new_releases but not in your recorded old list).
-          sort -V new_releases -o new_releases.sorted
-          diff -u new_releases new_releases.sorted || echo "Already sorted OK"
-          comm -23 new_releases last_k8s_versions.sorted > compared_versions
+          comm -23 new_releases.sorted last_k8s_versions.sorted > compared_versions
 
           # Output the new versions as a GitHub Action output
           echo "compared_versions<<EOF" >> $GITHUB_OUTPUT
@@ -142,4 +97,3 @@ jobs:
                 --head "$BRANCH"
         env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
