@@ -31,8 +31,8 @@ jobs:
           sort  .last_k8s_versions > last_k8s_versions.sorted
 
           # Print out the current and previous release lists
-          echo "new_releases.sorted:"
-          cat new_releases.sorted
+          echo "new_releases"
+          cat new_releases
           echo "last_k8s_versions.sorted:"
           cat last_k8s_versions.sorted
 
